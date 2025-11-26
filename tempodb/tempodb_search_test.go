@@ -1996,6 +1996,9 @@ func runEventLinkInstrumentationSearchTest(t *testing.T, blockVersion string) {
 			Query: "{ event:name = `event name` }",
 		},
 		{
+			Query: "{ event:name = `event name` } && { event:name = `another event` }",
+		},
+		{
 			Query: "{ event:timeSinceStart > 10ms }",
 		},
 		{
@@ -2224,6 +2227,10 @@ func makeExpectedTrace(traceID []byte) (
 										Attributes: []*v1_common.KeyValue{
 											stringKV("exception.message", "random error"),
 										},
+									},
+									{
+										TimeUnixNano: uint64(1000*time.Second) + uint64(750*time.Millisecond),
+										Name:         "another event",
 									},
 								},
 								Links: []*v1.Span_Link{

@@ -502,8 +502,11 @@ func TestStatic_Equals(t *testing.T) {
 		{NewStaticFloatArray([]float64{1.1, 2.2}), NewStaticFloatArray([]float64{1.1, 2.2})},
 		{NewStaticStringArray([]string{}), NewStaticStringArray(nil)},
 		{NewStaticStringArray([]string{"foo", "bar"}), NewStaticStringArray([]string{"foo", "bar"})},
+		{NewStaticStringArray([]string{"foo", "bar"}), NewStaticString("foo")},
+		{NewStaticString("bar"), NewStaticStringArray([]string{"foo", "bar"})},
 		{NewStaticBooleanArray([]bool{}), NewStaticBooleanArray(nil)},
 		{NewStaticBooleanArray([]bool{true, false}), NewStaticBooleanArray([]bool{true, false})},
+		{NewStaticBooleanArray([]bool{true, false}), NewStaticBool(true)},
 		// Status and int comparison
 		{NewStaticStatus(StatusError), NewStaticInt(0)},
 		{NewStaticStatus(StatusOk), NewStaticInt(1)},
@@ -530,6 +533,7 @@ func TestStatic_Equals(t *testing.T) {
 		{NewStaticFloatArray([]float64{1.1, 2.2}), NewStaticFloatArray([]float64{2.2, 1.1})},
 		{NewStaticStringArray([]string{}), NewStaticStringArray([]string{""})},
 		{NewStaticStringArray([]string{"foo", "bar"}), NewStaticStringArray([]string{"bar", "foo"})},
+		{NewStaticStringArray([]string{"foo", "bar"}), NewStaticString("baz")},
 		{NewStaticBooleanArray([]bool{}), NewStaticBooleanArray([]bool{true})},
 		{NewStaticBooleanArray([]bool{true, false}), NewStaticBooleanArray([]bool{false, true})},
 	}

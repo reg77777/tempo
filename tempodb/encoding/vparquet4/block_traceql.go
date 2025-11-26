@@ -192,8 +192,8 @@ func (s *span) AttributeFor(a traceql.Attribute) (traceql.Static, bool) {
 		return traceql.StaticNil, false
 	case traceql.AttributeScopeEvent:
 		if len(s.eventAttrs) > 0 {
-			if attr := find(a, s.eventAttrs); attr != nil {
-				return *attr, true
+			if attr, ok := reduceMatchingEventAttributes(a, s.eventAttrs); ok {
+				return attr, true
 			}
 		}
 		return traceql.StaticNil, false
@@ -759,6 +759,82 @@ func (s *span) setTraceAttrs(attrs []attrVal) {
 
 func (s *span) setEventAttrs(attrs []attrVal) {
 	s.eventAttrs = append(s.eventAttrs, attrs...)
+}
+
+func reduceMatchingEventAttributes(a traceql.Attribute, attrs []attrVal) (traceql.Static, bool) {
+	values := make([]traceql.Static, 0, len(attrs))
+
+	for i := range attrs {
+		if attrs[i].a == a && attrs[i].s.Type != traceql.TypeNil {
+			values = append(values, attrs[i].s)
+		}
+	}
+
+	if len(values) == 0 {
+		return traceql.StaticNil, false
+	}
+	if len(values) == 1 {
+		return values[0], true
+	}
+
+	if combined, ok := combineStaticValues(values); ok {
+		return combined, true
+	}
+
+	return values[0], true
+}
+
+func combineStaticValues(values []traceql.Static) (traceql.Static, bool) {
+	if len(values) == 0 {
+		return traceql.StaticNil, false
+	}
+
+	typ := values[0].Type
+	switch typ {
+	case traceql.TypeString:
+		arr := make([]string, 0, len(values))
+		for _, v := range values {
+			if v.Type != typ {
+				return traceql.StaticNil, false
+			}
+			arr = append(arr, v.EncodeToString(false))
+		}
+		return traceql.NewStaticStringArray(arr), true
+
+	case traceql.TypeInt:
+		arr := make([]int, 0, len(values))
+		for _, v := range values {
+			if v.Type != typ {
+				return traceql.StaticNil, false
+			}
+			i, _ := v.Int()
+			arr = append(arr, i)
+		}
+		return traceql.NewStaticIntArray(arr), true
+
+	case traceql.TypeFloat:
+		arr := make([]float64, 0, len(values))
+		for _, v := range values {
+			if v.Type != typ {
+				return traceql.StaticNil, false
+			}
+			arr = append(arr, v.Float())
+		}
+		return traceql.NewStaticFloatArray(arr), true
+
+	case traceql.TypeBoolean:
+		arr := make([]bool, 0, len(values))
+		for _, v := range values {
+			if v.Type != typ {
+				return traceql.StaticNil, false
+			}
+			b, _ := v.Bool()
+			arr = append(arr, b)
+		}
+		return traceql.NewStaticBooleanArray(arr), true
+	}
+
+	return traceql.StaticNil, false
 }
 
 func (s *span) setLinkAttrs(attrs []attrVal) {

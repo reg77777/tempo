@@ -821,10 +821,55 @@ func (s Static) Equals(o *Static) bool {
 		return sf == o.Float()
 	case TypeKind, TypeBoolean:
 		return s.Type == o.Type && s.valScalar == o.valScalar
-	case TypeString, TypeIntArray, TypeFloatArray, TypeBooleanArray:
-		return s.Type == o.Type && bytes.Equal(s.valBytes, o.valBytes)
+	case TypeString:
+		switch o.Type {
+		case TypeString:
+			return bytes.Equal(s.valBytes, o.valBytes)
+		case TypeStringArray:
+			arr, _ := o.StringArray()
+			return slices.Contains(arr, s.EncodeToString(false))
+		}
+	case TypeIntArray:
+		switch o.Type {
+		case TypeIntArray:
+			return bytes.Equal(s.valBytes, o.valBytes)
+		case TypeInt:
+			arr, _ := s.IntArray()
+			i, _ := o.Int()
+			return slices.Contains(arr, i)
+		case TypeDuration:
+			arr, _ := s.IntArray()
+			d, _ := o.Duration()
+			return slices.Contains(arr, int(d))
+		}
+	case TypeFloatArray:
+		switch o.Type {
+		case TypeFloatArray:
+			return bytes.Equal(s.valBytes, o.valBytes)
+		case TypeFloat:
+			arr, _ := s.FloatArray()
+			return slices.Contains(arr, o.Float())
+		case TypeInt, TypeDuration:
+			arr, _ := s.FloatArray()
+			return slices.Contains(arr, o.Float())
+		}
+	case TypeBooleanArray:
+		switch o.Type {
+		case TypeBooleanArray:
+			return bytes.Equal(s.valBytes, o.valBytes)
+		case TypeBoolean:
+			arr, _ := s.BooleanArray()
+			b, _ := o.Bool()
+			return slices.Contains(arr, b)
+		}
 	case TypeStringArray:
-		return s.Type == o.Type && slices.Equal(s.valStrings, o.valStrings)
+		switch o.Type {
+		case TypeStringArray:
+			return slices.Equal(s.valStrings, o.valStrings)
+		case TypeString:
+			arr, _ := s.StringArray()
+			return slices.Contains(arr, o.EncodeToString(false))
+		}
 	default:
 		// should not be reached
 		return false
